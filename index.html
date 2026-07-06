@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Special Date Invitation v2.0</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #e0e0e0;
+            
+            /* The Background Image */
+            background-image: url('Gemini_Generated_Image_tlrdbutlrdbutlrd.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        /* Subtle dark overlay so the text and zones are readable over the picture */
+        .overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            z-index: 1;
+        }
+
+        /* Wrapper to keep the interactive elements above the overlay */
+        .content-wrapper {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100%;
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            text-align: center;
+            margin-top: 10vh;
+            padding: 0 20px;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+        }
+
+        .drop-container {
+            display: flex;
+            justify-content: space-between;
+            width: 80%;
+            max-width: 400px;
+            margin-top: 15vh;
+            position: relative;
+        }
+
+        .zone {
+            width: 100px;
+            height: 100px;
+            border: 2px dashed rgba(255, 255, 255, 0.6);
+            background-color: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px); /* Adds a nice frosted glass effect */
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+
+        #yesZone {
+            border-color: #4CAF50;
+            color: #4CAF50;
+            text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
+        }
+
+        #noZone {
+            border-color: #f44336;
+            color: #f44336;
+            text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
+        }
+
+        .zone-success {
+            background-color: rgba(76, 175, 80, 0.4) !important;
+            border-style: solid;
+        }
+
+        #dragger {
+            width: 80px;
+            height: 80px;
+            background-color: #fb29d14d;
+            border-radius: 12px;
+            position: fixed;
+            left: 50%;
+            top: 65%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 2.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+            z-index: 100;
+            cursor: grab;
+            touch-action: none; 
+        }
+
+        /* --- NEW: Success Screen Overlay Styles --- */
+        .success-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Darkens the background */
+            backdrop-filter: blur(15px); /* Blurs the entire background image and UI */
+            z-index: 200; /* Puts it above everything else */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none; 
+            transition: opacity 0.8s ease; /* Smooth fade-in animation */
+        }
+
+        .success-screen.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .success-screen h2 {
+            font-size: 2rem;
+            margin-bottom: 30px;
+            text-align: center;
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.8);
+            color: white;
+            padding: 0 20px;
+        }
+
+        .success-screen a {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+            transition: transform 0.1s ease;
+        }
+        
+        .success-screen a:active {
+            transform: scale(0.95); /* Slight "press" effect on mobile */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="overlay"></div>
+
+    <div class="content-wrapper">
+        <h1>365 days since that day 💜<br><br>Drag to say yes to our very first kiss, all over again</h1>
+
+        <div class="drop-container">
+            <div id="yesZone" class="zone">YES</div>
+            <div id="noZone" class="zone">NO</div>
+        </div>
+    </div>
+
+    <!-- The draggable puzzle piece -->
+    <div id="dragger">😘</div>
+
+    <!-- --- NEW: Hidden Success Screen --- -->
+    <div id="successScreen" class="success-screen">
+        <h2>Confirmed!<br>See you at 10pm 😘</h2>
+        <a href="https://www.google.com/maps?q=37.9877905,24.0177357" target="_blank">📍 37.9877905, 24.0177357</a>
+    </div>
+
+    <script>
+        const dragger = document.getElementById('dragger');
+        const yesZone = document.getElementById('yesZone');
+        const noZone = document.getElementById('noZone');
+        
+        let yesRect, noRect;
+        let isDragging = false;
+        
+        function getZoneRects() {
+            yesRect = yesZone.getBoundingClientRect();
+            noRect = noZone.getBoundingClientRect();
+        }
+        
+        window.addEventListener('load', getZoneRects);
+        window.addEventListener('resize', getZoneRects);
+
+        dragger.addEventListener('pointerdown', (e) => {
+            isDragging = true;
+            dragger.style.cursor = 'grabbing';
+            dragger.setPointerCapture(e.pointerId);
+            dragger.style.transform = 'translate(0, 0)'; 
+            updatePiecePosition(e.clientX, e.clientY);
+        });
+
+        dragger.addEventListener('pointermove', (e) => {
+            if (!isDragging) return;
+            
+            let targetX = e.clientX;
+            let targetY = e.clientY;
+
+            const noXCenter = noRect.left + noRect.width / 2;
+            const noYCenter = noRect.top + noRect.height / 2;
+            
+            const distToNo = Math.hypot(targetX - noXCenter, targetY - noYCenter);
+            const threshold = 160;
+
+            if (distToNo < threshold) {
+                const intensity = 1 - (distToNo / threshold);
+                const pushXVec = targetX - noXCenter;
+                const pushYVec = targetY - noYCenter;
+                
+                targetX += (pushXVec * intensity * 1.5);
+                targetY += (pushYVec * intensity * 1.5);
+            }
+
+            updatePiecePosition(targetX, targetY);
+        });
+
+        dragger.addEventListener('pointerup', (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            dragger.style.cursor = 'grab';
+            
+            getZoneRects();
+            
+            const yesXCenter = yesRect.left + yesRect.width / 2;
+            const yesYCenter = yesRect.top + yesRect.height / 2;
+            
+            const draggerRect = dragger.getBoundingClientRect();
+            const draggerXCenter = draggerRect.left + draggerRect.width / 2;
+            const draggerYCenter = draggerRect.top + draggerRect.height / 2;
+            
+            const distToYes = Math.hypot(draggerXCenter - yesXCenter, draggerYCenter - yesYCenter);
+            const successRadius = 60;
+
+            if (distToYes < successRadius) {
+                yesZone.classList.add('zone-success');
+                dragger.style.backgroundColor = '#4CAF50';
+                dragger.innerHTML = '✔';
+                dragger.style.left = (yesXCenter - draggerRect.width / 2) + 'px';
+                dragger.style.top = (yesYCenter - draggerRect.height / 2) + 'px';
+                
+                // Trigger the new blur animation and text overlay instead of an alert
+                setTimeout(() => {
+                    document.getElementById('successScreen').classList.add('active');
+                }, 400); // 400ms delay lets the user see the piece snap into the box first
+                
+            } else {
+                resetPiece();
+            }
+        });
+
+        function updatePiecePosition(x, y) {
+            dragger.style.left = (x - dragger.offsetWidth / 2) + 'px';
+            dragger.style.top = (y - dragger.offsetHeight / 2) + 'px';
+        }
+
+        function resetPiece() {
+            dragger.style.left = '50%';
+            dragger.style.top = '65%';
+            dragger.style.transform = 'translate(-50%, -50%)';
+            dragger.innerHTML = '😘';
+            yesZone.classList.remove('zone-success');
+            dragger.style.backgroundColor = '#fb29d14d';
+        }
+        
+        dragger.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+    </script>
+</body>
+</html>
